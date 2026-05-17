@@ -1,0 +1,24 @@
+### Gradle ###
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+### IDE ###
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Env / secrets ###
+.env
+*.local
+
+### Scratch ###
+_skeleton/
+*.zip
