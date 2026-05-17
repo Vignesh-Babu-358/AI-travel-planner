@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +50,13 @@ public class TripService {
 		log.info("Saved trip {} and embedded it into the vector store", saved.getId());
 
 		return TripResponse.from(saved);
+	}
+
+	@Transactional(readOnly = true)
+	public List<TripResponse> list() {
+		return tripRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
+				.map(TripResponse::from)
+				.toList();
 	}
 
 	@Transactional(readOnly = true)

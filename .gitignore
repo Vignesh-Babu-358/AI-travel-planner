@@ -19,6 +19,10 @@ Thumbs.db
 .env
 *.local
 
+### Frontend ###
+frontend/node_modules/
+frontend/dist/
+
 ### Scratch ###
 _skeleton/
 *.zip

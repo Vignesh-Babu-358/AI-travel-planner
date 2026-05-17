@@ -51,12 +51,30 @@ trips are embedded so RAG has content.
 - Swagger UI: <http://localhost:8080/swagger-ui.html>
 - Health: <http://localhost:8080/actuator/health>
 
+## Frontend (React + Vite)
+
+A web UI lives in [frontend/](frontend/) (React 19 + Vite + Tailwind). It talks
+to the backend through a Vite dev proxy (`/api` → `:8080`), so no CORS config is
+needed and you only open one URL.
+
+```powershell
+# backend must be running on :8080 first
+cd frontend
+npm install   # first time only
+npm run dev
+```
+
+Open <http://localhost:5173>. Pages: **Plan** (generate itinerary + see RAG
+context, save it), **Trips** (list + detail), **Save** (manual), **Similar**
+(semantic search). Production build: `npm run build` (outputs `frontend/dist/`).
+
 ## Endpoints
 
 | Method | Path | Purpose |
 |---|---|---|
 | `POST` | `/api/trips/plan` | Generate an itinerary (RAG-grounded with similar past trips) |
 | `POST` | `/api/trips` | Persist a trip + embed it into PGVector |
+| `GET` | `/api/trips` | List all saved trips (newest first) |
 | `GET` | `/api/trips/{id}` | Fetch a saved trip |
 | `GET` | `/api/trips/similar?query=&k=` | Semantic similarity search over past trips |
 

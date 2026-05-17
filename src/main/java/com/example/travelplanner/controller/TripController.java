@@ -49,6 +49,12 @@ public class TripController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(tripService.save(request));
 	}
 
+	@GetMapping
+	@Operation(summary = "List all saved trips (newest first)")
+	public List<TripResponse> list() {
+		return tripService.list();
+	}
+
 	@GetMapping("/{id}")
 	@Operation(summary = "Get a saved trip by id")
 	public TripResponse get(@PathVariable Long id) {
