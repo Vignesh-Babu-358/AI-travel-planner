@@ -22,3 +22,4 @@ Thumbs.db
 ### Scratch ###
 _skeleton/
 *.zip
+.claude/
