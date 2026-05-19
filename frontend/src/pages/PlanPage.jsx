@@ -10,11 +10,34 @@ import Spinner from '../components/Spinner.jsx'
 const EMPTY = {
   origin: '',
   destination: '',
+  waypoints: '',
   startDate: '',
   endDate: '',
+  motorcycleModel: '',
+  ridingExperience: '',
+  maxDailyDistanceKm: '',
+  fuelRangeKm: '',
+  routePreference: '',
+  avoidHighways: false,
+  avoidTolls: false,
   interests: '',
   budget: '',
   notes: '',
+}
+
+const EXPERIENCE = [
+  { value: '', label: 'Any / unspecified' },
+  { value: 'beginner', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'experienced', label: 'Experienced' },
+]
+
+// Generic change handler: checkboxes → boolean, number inputs → number.
+function readEvent(e) {
+  const { name, type, value, checked } = e.target
+  if (type === 'checkbox') return [name, checked]
+  if (type === 'number') return [name, value === '' ? '' : Number(value)]
+  return [name, value]
 }
 
 export default function PlanPage() {
@@ -25,7 +48,10 @@ export default function PlanPage() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  const update = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+  const update = (e) => {
+    const [name, val] = readEvent(e)
+    setForm((f) => ({ ...f, [name]: val }))
+  }
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -57,9 +83,10 @@ export default function PlanPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Plan a trip</h1>
+        <h1 className="text-2xl font-bold">Plan a ride</h1>
         <p className="text-sm text-slate-500">
-          Generates an itinerary with OpenAI, grounded in similar past trips (RAG).
+          Generates a day-by-day motorcycle route with OpenAI, grounded in
+          similar past rides (RAG).
         </p>
       </div>
 
@@ -67,14 +94,26 @@ export default function PlanPage() {
         onSubmit={onSubmit}
         className="grid grid-cols-1 gap-4 rounded-lg border border-slate-200 bg-white p-5 sm:grid-cols-2"
       >
-        <Field label="Origin" name="origin" value={form.origin} onChange={update} required />
-        <Field label="Destination" name="destination" value={form.destination} onChange={update} required />
+        <Field label="Ride start" name="origin" value={form.origin} onChange={update} required placeholder="Manali" />
+        <Field label="Destination / end" name="destination" value={form.destination} onChange={update} required placeholder="Leh" />
+        <div className="sm:col-span-2">
+          <Field label="Waypoints (via)" name="waypoints" value={form.waypoints} onChange={update} placeholder="Jispa, Sarchu, Pang" />
+        </div>
         <Field label="Start date" name="startDate" type="date" value={form.startDate} onChange={update} />
         <Field label="End date" name="endDate" type="date" value={form.endDate} onChange={update} />
-        <Field label="Interests" name="interests" value={form.interests} onChange={update} placeholder="temples, food, hiking" />
+        <Field label="Motorcycle" name="motorcycleModel" value={form.motorcycleModel} onChange={update} placeholder="Royal Enfield Himalayan 450" />
+        <Field label="Riding experience" name="ridingExperience" value={form.ridingExperience} onChange={update} options={EXPERIENCE} />
+        <Field label="Max daily distance (km)" name="maxDailyDistanceKm" type="number" value={form.maxDailyDistanceKm} onChange={update} placeholder="250" />
+        <Field label="Fuel / charge range (km)" name="fuelRangeKm" type="number" value={form.fuelRangeKm} onChange={update} placeholder="250" />
+        <div className="sm:col-span-2">
+          <Field label="Route preference" name="routePreference" value={form.routePreference} onChange={update} placeholder="twisty mountain passes, scenic coastal…" />
+        </div>
+        <Field label="Avoid highways" name="avoidHighways" checkbox value={form.avoidHighways} onChange={update} />
+        <Field label="Avoid tolls" name="avoidTolls" checkbox value={form.avoidTolls} onChange={update} />
+        <Field label="Scenery & points of interest" name="interests" value={form.interests} onChange={update} placeholder="passes, viewpoints, lakes" />
         <Field label="Budget" name="budget" value={form.budget} onChange={update} placeholder="moderate" />
         <div className="sm:col-span-2">
-          <Field label="Notes" name="notes" value={form.notes} onChange={update} placeholder="traveling with kids, vegetarian…" />
+          <Field label="Notes" name="notes" value={form.notes} onChange={update} placeholder="two-up, panniers, cold mornings…" />
         </div>
         <div className="sm:col-span-2">
           <button
@@ -82,7 +121,7 @@ export default function PlanPage() {
             disabled={loading}
             className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
           >
-            {loading ? 'Generating…' : 'Generate itinerary'}
+            {loading ? 'Generating…' : 'Generate ride plan'}
           </button>
         </div>
       </form>
@@ -95,14 +134,14 @@ export default function PlanPage() {
           <section className="rounded-lg border border-slate-200 bg-white p-6">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-xl font-semibold">
-                Itinerary — {result.destination}
+                Ride plan — {result.destination}
               </h2>
               <button
                 onClick={onSave}
                 disabled={saving}
                 className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
               >
-                {saving ? 'Saving…' : 'Save this trip'}
+                {saving ? 'Saving…' : 'Save this ride'}
               </button>
             </div>
             <p className="mb-4 text-xs text-slate-400">model: {result.model}</p>
@@ -111,7 +150,7 @@ export default function PlanPage() {
 
           <section>
             <h2 className="mb-3 text-lg font-semibold">
-              RAG context — similar past trips ({result.usedContext?.length || 0})
+              RAG context — similar past rides ({result.usedContext?.length || 0})
             </h2>
             {result.usedContext?.length ? (
               <div className="grid gap-3 sm:grid-cols-2">
@@ -123,7 +162,7 @@ export default function PlanPage() {
               </div>
             ) : (
               <p className="text-sm text-slate-500">
-                No similar past trips were retrieved for this request.
+                No similar past rides were retrieved for this request.
               </p>
             )}
           </section>

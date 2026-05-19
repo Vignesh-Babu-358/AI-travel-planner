@@ -37,8 +37,16 @@ public class TripService {
 		Trip trip = new Trip(
 				request.origin(),
 				request.destination(),
+				request.waypoints(),
 				request.startDate(),
 				request.endDate(),
+				request.motorcycleModel(),
+				request.ridingExperience(),
+				request.maxDailyDistanceKm(),
+				request.fuelRangeKm(),
+				request.routePreference(),
+				request.avoidHighways(),
+				request.avoidTolls(),
 				request.interests(),
 				request.budget(),
 				request.itinerary());

@@ -41,26 +41,28 @@ class TripPlanningServiceTest {
 	void planUsesSimilarTripsAsContextAndReturnsItinerary() {
 		Document past = Document.builder()
 				.text("Trip to Kyoto (from London)\nInterests: temples")
-				.metadata(Map.of("tripId", 7L, "destination", "Kyoto", "interests", "temples"))
+				.metadata(Map.of("tripId", 7L, "destination", "Leh", "interests", "high passes"))
 				.build();
 		when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of(past));
 		when(chatClient.prompt().user(any(Consumer.class)).call().content())
 				.thenReturn("Day 1: ...");
 
 		PlanTripRequest request = new PlanTripRequest(
-				"London", "Kyoto",
-				LocalDate.of(2025, 4, 1), LocalDate.of(2025, 4, 5),
-				"temples", "moderate", null);
+				"Manali", "Leh", "Jispa, Sarchu",
+				LocalDate.of(2025, 7, 5), LocalDate.of(2025, 7, 8),
+				"Royal Enfield Himalayan", "experienced", 180, 250,
+				"high-altitude passes", false, false,
+				"glaciers, remote villages", "moderate", null);
 
 		PlanTripResponse response = newService().plan(request);
 
 		assertThat(response.itinerary()).isEqualTo("Day 1: ...");
-		assertThat(response.destination()).isEqualTo("Kyoto");
+		assertThat(response.destination()).isEqualTo("Leh");
 		assertThat(response.model()).isEqualTo("gpt-4o-mini");
 		assertThat(response.usedContext()).hasSize(1);
 		SimilarTripResponse ctx = response.usedContext().get(0);
 		assertThat(ctx.tripId()).isEqualTo(7L);
-		assertThat(ctx.destination()).isEqualTo("Kyoto");
+		assertThat(ctx.destination()).isEqualTo("Leh");
 	}
 
 	@Test

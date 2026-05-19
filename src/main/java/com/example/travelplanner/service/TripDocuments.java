@@ -16,6 +16,7 @@ final class TripDocuments {
 	static final String META_TRIP_ID = "tripId";
 	static final String META_DESTINATION = "destination";
 	static final String META_INTERESTS = "interests";
+	static final String META_ROUTE_PREFERENCE = "routePreference";
 
 	private TripDocuments() {
 	}
@@ -23,17 +24,31 @@ final class TripDocuments {
 	/** The text that gets embedded into the vector store. */
 	static String toText(Trip trip) {
 		return """
-				Trip to %s (from %s)
+				Motorcycle road trip: %s -> %s (via %s)
 				Dates: %s to %s
-				Interests: %s
+				Motorcycle: %s
+				Rider experience: %s
+				Max daily distance: %s km
+				Fuel range: %s km
+				Route preference: %s
+				Avoid highways: %s | Avoid tolls: %s
+				Scenery & points of interest: %s
 				Budget: %s
 
 				Itinerary:
 				%s""".formatted(
-				trip.getDestination(),
-				trip.getOrigin(),
+				nullSafe(trip.getOrigin()),
+				nullSafe(trip.getDestination()),
+				nullSafe(trip.getWaypoints()),
 				trip.getStartDate(),
 				trip.getEndDate(),
+				nullSafe(trip.getMotorcycleModel()),
+				nullSafe(trip.getRidingExperience()),
+				str(trip.getMaxDailyDistanceKm()),
+				str(trip.getFuelRangeKm()),
+				nullSafe(trip.getRoutePreference()),
+				str(trip.getAvoidHighways()),
+				str(trip.getAvoidTolls()),
 				nullSafe(trip.getInterests()),
 				nullSafe(trip.getBudget()),
 				nullSafe(trip.getItinerary()));
@@ -46,6 +61,7 @@ final class TripDocuments {
 		}
 		metadata.put(META_DESTINATION, nullSafe(trip.getDestination()));
 		metadata.put(META_INTERESTS, nullSafe(trip.getInterests()));
+		metadata.put(META_ROUTE_PREFERENCE, nullSafe(trip.getRoutePreference()));
 		return Document.builder()
 				.text(toText(trip))
 				.metadata(metadata)
@@ -87,5 +103,9 @@ final class TripDocuments {
 
 	private static String nullSafe(String s) {
 		return s == null ? "" : s;
+	}
+
+	private static String str(Object o) {
+		return o == null ? "unspecified" : String.valueOf(o);
 	}
 }

@@ -32,27 +32,59 @@ public class SampleTripSeeder {
 				return;
 			}
 			List<SaveTripRequest> samples = List.of(
-					new SaveTripRequest("London", "Kyoto", LocalDate.of(2025, 4, 1),
-							LocalDate.of(2025, 4, 5), "temples, food, gardens", "moderate",
-							"Day 1: Arrival, Gion evening walk. Day 2: Fushimi Inari at dawn, "
-									+ "Nishiki Market lunch. Day 3: Arashiyama bamboo grove and "
-									+ "Tenryu-ji. Day 4: Kinkaku-ji, tea ceremony. Day 5: Departure."),
-					new SaveTripRequest("New York", "Lisbon", LocalDate.of(2025, 6, 10),
-							LocalDate.of(2025, 6, 14), "history, seafood, viewpoints", "budget",
-							"Day 1: Alfama and Sao Jorge castle. Day 2: Belem (tower, pasteis). "
-									+ "Day 3: Sintra day trip. Day 4: LX Factory and Time Out Market."),
-					new SaveTripRequest("Berlin", "Reykjavik", LocalDate.of(2025, 9, 2),
-							LocalDate.of(2025, 9, 6), "nature, hot springs, photography", "premium",
-							"Day 1: Reykjavik old town. Day 2: Golden Circle. Day 3: South coast "
-									+ "waterfalls and black sand beach. Day 4: Blue Lagoon."),
-					new SaveTripRequest("Paris", "Rome", LocalDate.of(2025, 5, 20),
-							LocalDate.of(2025, 5, 24), "art, ancient history, food", "moderate",
-							"Day 1: Colosseum and Roman Forum. Day 2: Vatican Museums and "
-									+ "St Peter's. Day 3: Trastevere food walk. Day 4: Borghese Gallery."),
-					new SaveTripRequest("Toronto", "Barcelona", LocalDate.of(2025, 7, 8),
-							LocalDate.of(2025, 7, 12), "architecture, beaches, tapas", "moderate",
-							"Day 1: Gothic Quarter. Day 2: Sagrada Familia and Park Guell. "
-									+ "Day 3: Barceloneta beach. Day 4: Montjuic and tapas crawl."));
+					new SaveTripRequest("Manali", "Leh", "Jispa, Sarchu, Pang",
+							LocalDate.of(2025, 7, 5), LocalDate.of(2025, 7, 8),
+							"Royal Enfield Himalayan 450", "experienced", 180, 250,
+							"high-altitude Himalayan passes, gravel sections", false, false,
+							"glaciers, remote villages, high passes", "moderate",
+							"Day 1: Manali -> Jispa via Atal Tunnel & Keylong (~140 km, 5h). "
+									+ "Fuel at Tandi (last pump for 365 km). Day 2: Jispa -> Sarchu "
+									+ "over Baralacha La 4,890 m (~90 km, 4h), gravel + water "
+									+ "crossings. Day 3: Sarchu -> Pang -> Leh via Gata Loops, "
+									+ "Nakee La, Tanglang La 5,328 m (~250 km, 9h, long day - start "
+									+ "at dawn). Acclimatise in Leh. Carry spare fuel; altitude "
+									+ "sickness risk."),
+					new SaveTripRequest("San Francisco", "Los Angeles",
+							"Monterey, Big Sur, Morro Bay, Santa Barbara",
+							LocalDate.of(2025, 9, 12), LocalDate.of(2025, 9, 15),
+							"Harley-Davidson Street Glide", "intermediate", 260, 280,
+							"scenic coastal cruising on Highway 1", true, false,
+							"ocean cliffs, viewpoints, seaside towns", "moderate",
+							"Day 1: SF -> Monterey via CA-1 & Santa Cruz (~190 km, 4h), "
+									+ "17-Mile Drive. Day 2: Monterey -> Big Sur -> Morro Bay "
+									+ "(Bixby Bridge, McWay Falls) (~210 km, 5h, slow twisty "
+									+ "cliffs). Day 3: Morro Bay -> Santa Barbara (~210 km). "
+									+ "Day 4: Santa Barbara -> LA via Malibu (~150 km)."),
+					new SaveTripRequest("Bormio", "Bormio",
+							"Stelvio Pass, Santa Maria, Umbrail Pass, Gavia Pass",
+							LocalDate.of(2025, 8, 2), LocalDate.of(2025, 8, 3),
+							"BMW R 1250 GS", "experienced", 200, 300,
+							"twisty alpine mountain passes", true, false,
+							"hairpin switchbacks, alpine panoramas", "premium",
+							"Day 1: Bormio -> Stelvio Pass 2,758 m (48 hairpins) -> Santa "
+									+ "Maria -> Umbrail Pass back to Bormio (~95 km, 4h of pure "
+									+ "switchbacks). Day 2: Bormio -> Gavia Pass 2,621 m -> Ponte "
+									+ "di Legno loop (~110 km, 4h, narrow with cattle on road)."),
+					new SaveTripRequest("Deals Gap", "Deals Gap",
+							"Tail of the Dragon US-129, Cherohala Skyway, Tellico Plains",
+							LocalDate.of(2025, 6, 14), LocalDate.of(2025, 6, 15),
+							"Kawasaki Ninja 650", "intermediate", 180, 200,
+							"technical twisty backroads", true, true,
+							"318 curves in 11 miles, forest scenery", "budget",
+							"Day 1: Deals Gap -> Tail of the Dragon (US-129, 318 curves) -> "
+									+ "Robbinsville (~70 km, 3h, ride it twice). Day 2: Robbinsville "
+									+ "-> Cherohala Skyway -> Tellico Plains -> back via US-129 "
+									+ "(~150 km, 4h)."),
+					new SaveTripRequest("Naples", "Sorrento",
+							"Amalfi, Positano, Ravello (SS163 Amalfitana)",
+							LocalDate.of(2025, 5, 18), LocalDate.of(2025, 5, 20),
+							"Ducati Scrambler", "intermediate", 120, 200,
+							"narrow scenic coastal cliff roads", true, true,
+							"sea-cliff villages, Mediterranean views", "moderate",
+							"Day 1: Naples -> Sorrento via SS145 (~55 km, 2h, heavy traffic). "
+									+ "Day 2: Sorrento -> Positano -> Amalfi -> Ravello on SS163 "
+									+ "(~50 km, 4h, very narrow, busloads - ride early). "
+									+ "Day 3: Amalfi coast loop back to Sorrento (~60 km)."));
 
 			int ok = 0;
 			for (SaveTripRequest sample : samples) {

@@ -1,8 +1,11 @@
-# AI-Powered Travel Planner API
+# AI-Powered Motorcycle Road-Trip Planner API
 
-Spring Boot 3 + Spring AI service that generates trip itineraries with an OpenAI
-LLM and uses **RAG over past trips** (PGVector) to ground new plans in what
-worked on similar previous trips.
+Spring Boot 3 + Spring AI service that generates **day-by-day motorcycle ride
+itineraries** with an OpenAI LLM — route legs with distances and ride time, fuel
+stops spaced to the bike's range, passes/twisties, road-surface and weather
+cautions, and rider gear/checklist tips. It uses **RAG over past rides**
+(PGVector) to ground new plans in what worked on similar previous motorcycle
+trips.
 
 ## Stack
 
@@ -64,9 +67,10 @@ npm install   # first time only
 npm run dev
 ```
 
-Open <http://localhost:5173>. Pages: **Plan** (generate itinerary + see RAG
-context, save it), **Trips** (list + detail), **Save** (manual), **Similar**
-(semantic search). Production build: `npm run build` (outputs `frontend/dist/`).
+Open <http://localhost:5173>. Pages: **Plan** (generate a ride plan + see RAG
+context, save it), **Trips** (saved rides list + detail), **Save** (manual),
+**Similar** (semantic search). Production build: `npm run build` (outputs
+`frontend/dist/`).
 
 ## Endpoints
 
@@ -78,21 +82,57 @@ context, save it), **Trips** (list + detail), **Save** (manual), **Similar**
 | `GET` | `/api/trips/{id}` | Fetch a saved trip |
 | `GET` | `/api/trips/similar?query=&k=` | Semantic similarity search over past trips |
 
+### Request fields
+
+`origin` (ride start) and `destination` are required; everything else is
+optional and falls back to sensible defaults.
+
+| Field | Type | Notes |
+|---|---|---|
+| `origin` / `destination` | string | **required** — ride start / end (loop allowed) |
+| `waypoints` | string | optional "via" stops |
+| `startDate` / `endDate` | date | `YYYY-MM-DD` |
+| `motorcycleModel` | string | e.g. `Royal Enfield Himalayan 450` |
+| `ridingExperience` | string | `beginner` / `intermediate` / `experienced` |
+| `maxDailyDistanceKm` | int | daily riding cap (paces the legs) |
+| `fuelRangeKm` | int | tank/charge range → fuel-stop spacing |
+| `routePreference` | string | e.g. `twisty mountain passes`, `scenic coastal` |
+| `avoidHighways` / `avoidTolls` | bool | prefer backroads / skip tolls |
+| `interests` | string | scenery & points of interest |
+| `budget` | string | accommodation/fuel budget level |
+| `notes` | string | free-form (two-up, panniers, cold mornings…) |
+
 ### Example
 
 ```bash
 curl -s http://localhost:8080/api/trips/plan -H "Content-Type: application/json" -d '{
-  "origin": "London",
-  "destination": "Kyoto",
-  "startDate": "2026-04-01",
-  "endDate": "2026-04-05",
-  "interests": "temples, food, gardens",
-  "budget": "moderate"
+  "origin": "Manali",
+  "destination": "Leh",
+  "waypoints": "Jispa, Sarchu, Pang",
+  "startDate": "2026-07-05",
+  "endDate": "2026-07-08",
+  "motorcycleModel": "Royal Enfield Himalayan 450",
+  "ridingExperience": "experienced",
+  "maxDailyDistanceKm": 200,
+  "fuelRangeKm": 250,
+  "routePreference": "high-altitude Himalayan passes",
+  "avoidHighways": false
 }'
 ```
 
 The response includes the generated `itinerary` and `usedContext` — the past
-trips retrieved from the vector store and fed to the model.
+rides retrieved from the vector store and fed to the model.
+
+### Re-seeding the sample rides
+
+The seeder loads 5 classic motorcycle routes **only when the `trips` table is
+empty**. If you previously ran the app it still holds old data, so reset the DB
+volume for a clean reseed:
+
+```powershell
+docker compose down -v   # drops the pgdata volume (trips + vector_store)
+.\gradlew.bat bootRun    # seeder repopulates with motorcycle routes
+```
 
 ## How RAG works here
 

@@ -16,13 +16,13 @@ export default function TripsListPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Saved trips</h1>
+      <h1 className="text-2xl font-bold">Saved rides</h1>
       <ErrorBanner message={error} />
       {!trips && !error && <Spinner />}
 
       {trips && trips.length === 0 && (
         <p className="text-sm text-slate-500">
-          No trips yet. Plan one or use Save.
+          No rides yet. Plan one or use Save.
         </p>
       )}
 
@@ -32,10 +32,10 @@ export default function TripsListPage() {
             <thead className="bg-slate-50 text-left text-slate-600">
               <tr>
                 <th className="px-4 py-2">#</th>
-                <th className="px-4 py-2">Destination</th>
-                <th className="px-4 py-2">Origin</th>
+                <th className="px-4 py-2">Route</th>
+                <th className="px-4 py-2">Motorcycle</th>
+                <th className="px-4 py-2">Route preference</th>
                 <th className="px-4 py-2">Dates</th>
-                <th className="px-4 py-2">Interests</th>
                 <th className="px-4 py-2"></th>
               </tr>
             </thead>
@@ -43,12 +43,14 @@ export default function TripsListPage() {
               {trips.map((t) => (
                 <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-2 font-mono text-slate-500">{t.id}</td>
-                  <td className="px-4 py-2 font-medium">{t.destination}</td>
-                  <td className="px-4 py-2 text-slate-600">{t.origin}</td>
+                  <td className="px-4 py-2 font-medium">
+                    {t.origin} → {t.destination}
+                  </td>
+                  <td className="px-4 py-2 text-slate-600">{t.motorcycleModel || '—'}</td>
+                  <td className="px-4 py-2 text-slate-600">{t.routePreference || '—'}</td>
                   <td className="px-4 py-2 text-slate-600">
                     {t.startDate || '—'} → {t.endDate || '—'}
                   </td>
-                  <td className="px-4 py-2 text-slate-600">{t.interests || '—'}</td>
                   <td className="px-4 py-2">
                     <Link className="text-blue-600 underline" to={`/trips/${t.id}`}>
                       Open

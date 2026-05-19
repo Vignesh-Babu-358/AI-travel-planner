@@ -1,15 +1,23 @@
-Plan a trip with the following details:
+Plan a motorcycle road trip with the following details:
 
-- Origin: {origin}
-- Destination: {destination}
+- Ride start: {origin}
+- Destination / end: {destination}
+- Waypoints (via): {waypoints}
 - Dates: {startDate} to {endDate} ({durationDays} day(s))
-- Interests: {interests}
+- Motorcycle: {motorcycleModel}
+- Rider experience: {ridingExperience}
+- Max daily distance: {maxDailyDistanceKm} km
+- Fuel/charge range: {fuelRangeKm} km
+- Route preference: {routePreference}
+- Avoid highways: {avoidHighways}
+- Avoid tolls: {avoidTolls}
+- Scenery & points of interest: {interests}
 - Budget: {budget}
 - Additional notes: {notes}
 
-Similar past trips for context (may be empty):
+Similar past motorcycle trips for context (may be empty):
 ---
 {context}
 ---
 
-Generate the itinerary now.
+Generate the day-by-day ride itinerary now.

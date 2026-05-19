@@ -30,14 +30,26 @@ export default function TripDetailPage() {
         <div className="space-y-4">
           <div>
             <h1 className="text-2xl font-bold">
-              {trip.destination}{' '}
-              <span className="text-base font-normal text-slate-500">
-                (from {trip.origin})
-              </span>
+              {trip.origin} → {trip.destination}
+              {trip.waypoints ? (
+                <span className="text-base font-normal text-slate-500">
+                  {' '}via {trip.waypoints}
+                </span>
+              ) : null}
             </h1>
             <p className="text-sm text-slate-500">
-              Trip #{trip.id} · {trip.startDate || '—'} → {trip.endDate || '—'} ·{' '}
-              {trip.interests || 'no interests'} · {trip.budget || 'no budget'}
+              Ride #{trip.id} · {trip.startDate || '—'} → {trip.endDate || '—'}
+              {trip.motorcycleModel ? ` · 🏍 ${trip.motorcycleModel}` : ''}
+              {trip.routePreference ? ` · ${trip.routePreference}` : ''}
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              {trip.ridingExperience ? `${trip.ridingExperience} rider` : 'experience: any'}
+              {trip.maxDailyDistanceKm ? ` · ≤ ${trip.maxDailyDistanceKm} km/day` : ''}
+              {trip.fuelRangeKm ? ` · ${trip.fuelRangeKm} km range` : ''}
+              {trip.avoidHighways ? ' · avoids highways' : ''}
+              {trip.avoidTolls ? ' · avoids tolls' : ''}
+              {trip.interests ? ` · ${trip.interests}` : ''}
+              {trip.budget ? ` · ${trip.budget}` : ''}
             </p>
           </div>
           <section className="rounded-lg border border-slate-200 bg-white p-6">

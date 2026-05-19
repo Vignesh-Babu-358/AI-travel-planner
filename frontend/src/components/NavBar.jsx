@@ -11,7 +11,7 @@ export default function NavBar() {
   return (
     <header className="border-b border-slate-200 bg-white">
       <nav className="mx-auto flex max-w-5xl items-center gap-1 px-4 py-3">
-        <span className="mr-4 text-lg font-bold text-slate-900">✈️ Travel Planner</span>
+        <span className="mr-4 text-lg font-bold text-slate-900">🏍 Moto Road-Trip Planner</span>
         {links.map((l) => (
           <NavLink
             key={l.to}

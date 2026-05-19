@@ -64,10 +64,18 @@ public class TripPlanningService {
 				.user(u -> u.text(userPrompt)
 						.param("origin", nullSafe(request.origin()))
 						.param("destination", nullSafe(request.destination()))
+						.param("waypoints", orDefault(request.waypoints(), "none"))
 						.param("startDate", String.valueOf(request.startDate()))
 						.param("endDate", String.valueOf(request.endDate()))
 						.param("durationDays", durationDays(request))
-						.param("interests", orDefault(request.interests(), "general sightseeing"))
+						.param("motorcycleModel", orDefault(request.motorcycleModel(), "any motorcycle"))
+						.param("ridingExperience", orDefault(request.ridingExperience(), "experienced"))
+						.param("maxDailyDistanceKm", num(request.maxDailyDistanceKm(), "no strict limit"))
+						.param("fuelRangeKm", num(request.fuelRangeKm(), "unknown"))
+						.param("routePreference", orDefault(request.routePreference(), "scenic, enjoyable riding roads"))
+						.param("avoidHighways", bool(request.avoidHighways()))
+						.param("avoidTolls", bool(request.avoidTolls()))
+						.param("interests", orDefault(request.interests(), "scenic viewpoints"))
 						.param("budget", orDefault(request.budget(), "moderate"))
 						.param("notes", orDefault(request.notes(), "none"))
 						.param("context", context))
@@ -99,11 +107,16 @@ public class TripPlanningService {
 	}
 
 	private String buildQuery(PlanTripRequest request) {
-		return "Trip to %s from %s. Interests: %s. Budget: %s. Notes: %s".formatted(
-				nullSafe(request.destination()),
+		return ("Motorcycle road trip from %s to %s via %s. Bike: %s. "
+				+ "Route preference: %s. Avoid highways: %s. "
+				+ "Scenery & interests: %s. Notes: %s").formatted(
 				nullSafe(request.origin()),
-				orDefault(request.interests(), "general"),
-				orDefault(request.budget(), "moderate"),
+				nullSafe(request.destination()),
+				orDefault(request.waypoints(), ""),
+				orDefault(request.motorcycleModel(), "any"),
+				orDefault(request.routePreference(), "scenic riding roads"),
+				bool(request.avoidHighways()),
+				orDefault(request.interests(), "scenic"),
 				orDefault(request.notes(), ""));
 	}
 
@@ -121,5 +134,13 @@ public class TripPlanningService {
 
 	private static String orDefault(String s, String fallback) {
 		return (s == null || s.isBlank()) ? fallback : s;
+	}
+
+	private static String num(Integer value, String fallback) {
+		return value == null ? fallback : String.valueOf(value);
+	}
+
+	private static String bool(Boolean value) {
+		return Boolean.TRUE.equals(value) ? "yes" : "no";
 	}
 }
