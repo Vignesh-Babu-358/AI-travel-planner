@@ -2,7 +2,9 @@ package com.example.travelplanner.service;
 
 import com.example.travelplanner.dto.PlanTripRequest;
 import com.example.travelplanner.dto.PlanTripResponse;
+import com.example.travelplanner.dto.RouteSummary;
 import com.example.travelplanner.dto.SimilarTripResponse;
+import com.example.travelplanner.service.routing.RoutingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -27,6 +29,7 @@ public class TripPlanningService {
 
 	private final ChatClient chatClient;
 	private final VectorStore vectorStore;
+	private final RoutingService routingService;
 	private final Resource userPrompt;
 	private final int topK;
 	private final double similarityThreshold;
@@ -35,12 +38,14 @@ public class TripPlanningService {
 	public TripPlanningService(
 			ChatClient chatClient,
 			VectorStore vectorStore,
+			RoutingService routingService,
 			@Value("classpath:prompts/plan-user-prompt.st") Resource userPrompt,
 			@Value("${app.rag.top-k:4}") int topK,
 			@Value("${app.rag.similarity-threshold:0.5}") double similarityThreshold,
 			@Value("${spring.ai.openai.chat.options.model:gpt-4o-mini}") String chatModel) {
 		this.chatClient = chatClient;
 		this.vectorStore = vectorStore;
+		this.routingService = routingService;
 		this.userPrompt = userPrompt;
 		this.topK = topK;
 		this.similarityThreshold = similarityThreshold;
@@ -48,6 +53,12 @@ public class TripPlanningService {
 	}
 
 	public PlanTripResponse plan(PlanTripRequest request) {
+		// Ground truth FIRST. If routing fails (no key / upstream down / bad
+		// place name) we surface the error rather than hand the LLM a blank
+		// map to hallucinate over.
+		RouteSummary route = routingService.planRoute(request);
+		String groundTruthRoute = RoutingService.toMarkdown(route);
+
 		List<Document> similar = retrieve(buildQuery(request));
 		List<SimilarTripResponse> usedContext = similar.stream()
 				.map(TripDocuments::toSimilarResponse)
@@ -57,8 +68,9 @@ public class TripPlanningService {
 				? "(no similar past trips found)"
 				: similar.stream().map(Document::getText).reduce("", (a, b) -> a + "\n---\n" + b);
 
-		log.info("Planning trip to {} with {} RAG context document(s)",
-				request.destination(), similar.size());
+		log.info("Planning trip {} -> {} ({} km, {} day(s)) with {} RAG document(s)",
+				request.origin(), request.destination(), route.totalDistanceKm(),
+				route.days().size(), similar.size());
 
 		String itinerary = chatClient.prompt()
 				.user(u -> u.text(userPrompt)
@@ -78,11 +90,12 @@ public class TripPlanningService {
 						.param("interests", orDefault(request.interests(), "scenic viewpoints"))
 						.param("budget", orDefault(request.budget(), "moderate"))
 						.param("notes", orDefault(request.notes(), "none"))
+						.param("groundTruthRoute", groundTruthRoute)
 						.param("context", context))
 				.call()
 				.content();
 
-		return new PlanTripResponse(request.destination(), chatModel, itinerary, usedContext);
+		return new PlanTripResponse(request.destination(), chatModel, route, itinerary, usedContext);
 	}
 
 	/** Free-form similarity search over past trips (used by GET /api/trips/similar). */

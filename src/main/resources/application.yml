@@ -43,6 +43,10 @@ app:
   rag:
     top-k: 4
     similarity-threshold: 0.5
+  routing:
+    ors:
+      base-url: ${ORS_BASE_URL:https://api.openrouteservice.org}
+      api-key: ${ORS_API_KEY:}
   seed-sample-trips: ${SEED_SAMPLE_TRIPS:true}
 
 springdoc:

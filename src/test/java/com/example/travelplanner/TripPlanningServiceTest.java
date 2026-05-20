@@ -2,8 +2,11 @@ package com.example.travelplanner;
 
 import com.example.travelplanner.dto.PlanTripRequest;
 import com.example.travelplanner.dto.PlanTripResponse;
+import com.example.travelplanner.dto.RouteDayLeg;
+import com.example.travelplanner.dto.RouteSummary;
 import com.example.travelplanner.dto.SimilarTripResponse;
 import com.example.travelplanner.service.TripPlanningService;
+import com.example.travelplanner.service.routing.RoutingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
@@ -26,11 +29,13 @@ class TripPlanningServiceTest {
 
 	private final ChatClient chatClient = mock(ChatClient.class, RETURNS_DEEP_STUBS);
 	private final VectorStore vectorStore = mock(VectorStore.class);
+	private final RoutingService routingService = mock(RoutingService.class);
 
 	private TripPlanningService newService() {
 		return new TripPlanningService(
 				chatClient,
 				vectorStore,
+				routingService,
 				new ClassPathResource("prompts/plan-user-prompt.st"),
 				4,
 				0.5,
@@ -39,8 +44,17 @@ class TripPlanningServiceTest {
 
 	@Test
 	void planUsesSimilarTripsAsContextAndReturnsItinerary() {
+		RouteSummary stubRoute = new RouteSummary(
+				"driving-car", 470.0, "12h 30m",
+				List.of(
+						new RouteDayLeg(1, "Manali", "Jispa", 140.0, "5h 0m",
+								new double[] { 77.18, 32.24 }, new double[] { 77.20, 32.61 }),
+						new RouteDayLeg(2, "Jispa", "Leh", 330.0, "7h 30m",
+								new double[] { 77.20, 32.61 }, new double[] { 77.58, 34.15 })));
+		when(routingService.planRoute(any(PlanTripRequest.class))).thenReturn(stubRoute);
+
 		Document past = Document.builder()
-				.text("Trip to Kyoto (from London)\nInterests: temples")
+				.text("Trip to Leh (from Manali)\nInterests: high passes")
 				.metadata(Map.of("tripId", 7L, "destination", "Leh", "interests", "high passes"))
 				.build();
 		when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of(past));
@@ -59,6 +73,8 @@ class TripPlanningServiceTest {
 		assertThat(response.itinerary()).isEqualTo("Day 1: ...");
 		assertThat(response.destination()).isEqualTo("Leh");
 		assertThat(response.model()).isEqualTo("gpt-4o-mini");
+		assertThat(response.route()).isSameAs(stubRoute);
+		assertThat(response.route().days()).hasSize(2);
 		assertThat(response.usedContext()).hasSize(1);
 		SimilarTripResponse ctx = response.usedContext().get(0);
 		assertThat(ctx.tripId()).isEqualTo(7L);
