@@ -2,6 +2,12 @@ spring:
   application:
     name: travel-planner
 
+  # Return RFC-7807 ProblemDetail JSON ({type,title,status,detail}) for
+  # ResponseStatusException etc., so error messages reach the frontend.
+  mvc:
+    problemdetails:
+      enabled: true
+
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/travel}
     username: ${DB_USERNAME:travel}
@@ -43,10 +49,6 @@ app:
   rag:
     top-k: 4
     similarity-threshold: 0.5
-  routing:
-    ors:
-      base-url: ${ORS_BASE_URL:https://api.openrouteservice.org}
-      api-key: ${ORS_API_KEY:}
   seed-sample-trips: ${SEED_SAMPLE_TRIPS:true}
 
 springdoc:

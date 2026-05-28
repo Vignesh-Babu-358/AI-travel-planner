@@ -4,7 +4,6 @@ import { planTrip, saveTrip } from '../api/client.js'
 import Field from '../components/Field.jsx'
 import Markdown from '../components/Markdown.jsx'
 import SimilarCard from '../components/SimilarCard.jsx'
-import RouteTable from '../components/RouteTable.jsx'
 import ErrorBanner from '../components/ErrorBanner.jsx'
 import Spinner from '../components/Spinner.jsx'
 
@@ -132,7 +131,6 @@ export default function PlanPage() {
 
       {result && (
         <div className="space-y-6">
-          <RouteTable route={result.route} />
           <section className="rounded-lg border border-slate-200 bg-white p-6">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-xl font-semibold">

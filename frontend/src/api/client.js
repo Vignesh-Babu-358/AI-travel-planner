@@ -22,9 +22,12 @@ async function request(path, { method = 'GET', body, params } = {}) {
   const data = text ? JSON.parse(text) : null
 
   if (!res.ok) {
-    // Backend returns RFC-7807 ProblemDetail: { status, detail, title, ... }
+    // Backend returns ProblemDetail ({detail,title}) when enabled, or Spring's
+    // default error body ({message,error}); cover both so the real cause
+    // surfaces in the UI instead of just the status code.
     const message =
-      (data && (data.detail || data.title)) || `Request failed (${res.status})`
+      (data && (data.detail || data.message || data.error || data.title)) ||
+      `Request failed (${res.status})`
     throw new Error(message)
   }
   return data

@@ -1,9 +1,5 @@
-Plan a motorcycle road trip with the following details.
+Plan a motorcycle road trip with the following details:
 
-GROUND-TRUTH ROUTE (real data — copy distances, durations and town names verbatim):
-{groundTruthRoute}
-
-Rider & ride parameters:
 - Ride start: {origin}
 - Destination / end: {destination}
 - Waypoints (via): {waypoints}
@@ -19,11 +15,9 @@ Rider & ride parameters:
 - Budget: {budget}
 - Additional notes: {notes}
 
-Similar past motorcycle trips for inspiration only (do NOT copy their
-distances or place names; use the ground-truth route above for those):
+Similar past motorcycle trips for context (may be empty):
 ---
 {context}
 ---
 
-Write the day-by-day ride itinerary now. One section per day from the
-ground-truth table, in order, with the exact start, end, km and ride time.
+Generate the day-by-day ride itinerary now.
