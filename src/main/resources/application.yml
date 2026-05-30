@@ -49,6 +49,15 @@ app:
   rag:
     top-k: 4
     similarity-threshold: 0.5
+  routing:
+    google:
+      base-url: ${GOOGLE_MAPS_BASE_URL:https://maps.googleapis.com}
+      api-key: ${GOOGLE_MAPS_API_KEY:}
+      # Region biasing for routing/geocoding (ccTLD, e.g. 'in' for India).
+      region: ${GOOGLE_MAPS_REGION:in}
+      # Restrict geocoding to a specific country (ISO 3166-1 alpha-2, lowercase)
+      # so place names don't match towns on other continents.
+      country-bias: ${GOOGLE_MAPS_COUNTRY:in}
   seed-sample-trips: ${SEED_SAMPLE_TRIPS:true}
 
 springdoc:

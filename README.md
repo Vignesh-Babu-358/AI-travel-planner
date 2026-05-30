@@ -18,6 +18,12 @@ trips.
 ## Prerequisites
 
 - An OpenAI API key
+- A **Google Maps API key** with **Directions API** and **Geocoding API**
+  enabled on a GCP project that has billing turned on (the $200/month free
+  credit covers ~40k requests — plenty for personal use). Used to fetch the
+  real route (real roads, real distances, real town names) that the LLM
+  then narrates around. Without it, `POST /api/trips/plan` returns a 503
+  with a clear message rather than a hallucinated route.
 - Docker (for the bundled `pgvector` database). `spring-boot-docker-compose`
   starts/stops `docker-compose.yml` automatically during `bootRun`.
 
@@ -28,6 +34,9 @@ trips.
 | `OPENAI_API_KEY` | _(required)_ | OpenAI auth; app fails fast at startup if missing |
 | `OPENAI_CHAT_MODEL` | `gpt-4o-mini` | Chat model |
 | `OPENAI_EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model (1536 dims) |
+| `GOOGLE_MAPS_API_KEY` | _(required for /plan)_ | Google Maps key (Directions + Geocoding APIs enabled) |
+| `GOOGLE_MAPS_REGION` | `in` | ccTLD bias for routing/geocoding (e.g. `in` for India) |
+| `GOOGLE_MAPS_COUNTRY` | `in` | ISO-3166 alpha-2 (lowercase) to constrain geocoding to a country |
 | `DB_URL` | `jdbc:postgresql://localhost:5432/travel` | JDBC URL |
 | `DB_USERNAME` / `DB_PASSWORD` | `travel` / `travel` | DB credentials |
 | `SEED_SAMPLE_TRIPS` | `true` | Seed ~5 sample past trips on first start |
@@ -43,7 +52,8 @@ Unit tests mock the AI/vector beans, so the build is green offline.
 ## Run
 
 ```powershell
-$env:OPENAI_API_KEY = "sk-..."
+$env:OPENAI_API_KEY      = "sk-..."
+$env:GOOGLE_MAPS_API_KEY = "AIza..."
 .\gradlew.bat bootRun
 ```
 
@@ -134,15 +144,23 @@ docker compose down -v   # drops the pgdata volume (trips + vector_store)
 .\gradlew.bat bootRun    # seeder repopulates with motorcycle routes
 ```
 
-## How RAG works here
+## How a plan request flows
 
-1. `POST /api/trips` persists a `Trip` (JPA) and adds a `Document`
-   (itinerary text + metadata) to PGVector; OpenAI embeddings are generated
-   inside `VectorStore.add(...)`.
-2. `POST /api/trips/plan` builds a semantic query from the ride parameters,
-   runs `vectorStore.similaritySearch(...)`, injects the retrieved past rides
-   into the prompt template, and calls the LLM via `ChatClient` to produce a
-   day-by-day Markdown itinerary (distances and ride times are LLM estimates,
-   clearly marked as approximate).
+1. **Routing (ground truth)** — [RoutingService](src/main/java/com/example/travelplanner/service/routing/RoutingService.java)
+   geocodes `origin`/`destination`/waypoints via Google Maps Geocoding,
+   calls Google Maps Directions (`mode=driving`, `region=in`, `avoid=…`),
+   then chunks the real polyline into daily legs of at most
+   `maxDailyDistanceKm`, reverse-geocoding each day boundary to a real
+   town name. Result: `RouteSummary { totalDistanceKm, totalDuration, days[] }`.
+2. **RAG** — [TripPlanningService](src/main/java/com/example/travelplanner/service/TripPlanningService.java)
+   builds a semantic query from the ride parameters and runs
+   `vectorStore.similaritySearch(...)` against PGVector for similar past rides.
+3. **LLM narrative** — the `RouteSummary` is rendered to Markdown and injected
+   into the user prompt as the **source of truth**; the system prompt forbids
+   changing distances, durations or town names. The model only writes the
+   day-by-day narrative (fuel stops, viewpoints, road notes, rider tips).
+4. **Save (`POST /api/trips`)** persists the trip and adds a `Document` to
+   PGVector so future plans can retrieve it as context.
 
-See [src/main/java/com/example/travelplanner/service/TripPlanningService.java](src/main/java/com/example/travelplanner/service/TripPlanningService.java).
+If `GOOGLE_MAPS_API_KEY` is unset or Google is unreachable, `/plan` returns
+a clear 503 rather than letting the LLM invent a route.
