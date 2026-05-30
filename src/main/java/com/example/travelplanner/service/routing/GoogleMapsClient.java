@@ -42,11 +42,11 @@ public class GoogleMapsClient {
 	private final String region;
 	private final String countryBias;
 
-	public GoogleMapsClient(RestClient googleMapsClient,
+	public GoogleMapsClient(RestClient googleMapsRestClient,
 							@Value("${app.routing.google.api-key:}") String apiKey,
 							@Value("${app.routing.google.region:in}") String region,
 							@Value("${app.routing.google.country-bias:in}") String countryBias) {
-		this.client = googleMapsClient;
+		this.client = googleMapsRestClient;
 		this.apiKey = apiKey == null ? "" : apiKey;
 		this.apiKeyConfigured = !this.apiKey.isBlank();
 		this.region = region == null ? "" : region.trim();

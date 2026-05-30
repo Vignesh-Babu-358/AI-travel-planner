@@ -20,7 +20,7 @@ import java.time.Duration;
 public class RoutingConfig {
 
 	@Bean
-	RestClient googleMapsClient(
+	RestClient googleMapsRestClient(
 			@Value("${app.routing.google.base-url:https://maps.googleapis.com}") String baseUrl) {
 		return RestClient.builder()
 				.baseUrl(baseUrl)
