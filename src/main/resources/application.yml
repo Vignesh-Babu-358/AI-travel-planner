@@ -1,3 +1,7 @@
+server:
+  # Render injects PORT at runtime; default 8080 keeps local dev unchanged.
+  port: ${PORT:8080}
+
 spring:
   application:
     name: travel-planner
@@ -21,10 +25,12 @@ spring:
       hibernate:
         format_sql: false
 
-  # spring-boot-docker-compose auto-starts docker-compose.yml when Docker is available.
+  # spring-boot-docker-compose auto-starts docker-compose.yml in local dev.
+  # In hosted environments (Render etc.) Postgres is external — set
+  # SPRING_DOCKER_COMPOSE_ENABLED=false to skip the local compose lookup.
   docker:
     compose:
-      enabled: true
+      enabled: ${SPRING_DOCKER_COMPOSE_ENABLED:true}
       lifecycle-management: start-and-stop
 
   ai:

@@ -82,6 +82,55 @@ context, save it), **Trips** (saved rides list + detail), **Save** (manual),
 **Similar** (semantic search). Production build: `npm run build` (outputs
 `frontend/dist/`).
 
+## Deployment (Render + Supabase, free tier)
+
+Single-deploy setup: the [Dockerfile](Dockerfile) builds the React app, bakes
+the static bundle into the Spring Boot fat jar, and serves both API and UI
+from one URL. React Router deep links work via
+[SpaFallbackController](src/main/java/com/example/travelplanner/controller/SpaFallbackController.java).
+
+### One-time setup
+
+1. **Supabase** — create a free project at <https://supabase.com>. In the SQL
+   editor, run `CREATE EXTENSION IF NOT EXISTS vector;`. From *Project
+   Settings → Database*, copy the **Session Pooler** JDBC string
+   (port 5432, not the 6543 transaction pooler — Spring AI's `pgvector` store
+   needs a full Postgres session).
+2. **Render** — at <https://render.com>, create a Web Service from the
+   GitHub repo. Runtime: **Docker**. Plan: **Free**. Set environment
+   variables:
+   - `OPENAI_API_KEY`
+   - `GOOGLE_MAPS_API_KEY`
+   - `DB_URL` (the Supabase JDBC URL, e.g. `jdbc:postgresql://...sslmode=require`)
+   - `DB_USERNAME`, `DB_PASSWORD`
+   - `SPRING_DOCKER_COMPOSE_ENABLED=false` (Postgres is external on Render)
+3. Click *Create Web Service*. First build is ~10 min (downloads JDK + Gradle
+   + npm deps); later builds reuse cached layers. The deploy URL is
+   `https://<service-name>.onrender.com`.
+
+### Free-tier caveats
+
+- The service **spins down after ~15 min of inactivity**; first request after
+  that takes ~30 s to wake up. Subsequent requests are fast.
+- Supabase free pauses after a week of no traffic; resumes automatically on
+  the next connection.
+- Render free gives 512 MB RAM; the Dockerfile sets `-XX:MaxRAMPercentage=75`
+  so the JVM stays inside that limit.
+
+### Local Docker smoke test (before pushing)
+
+```powershell
+docker build -t travel-planner .
+docker run --rm -p 8080:8080 `
+  -e OPENAI_API_KEY=sk-... `
+  -e GOOGLE_MAPS_API_KEY=AIza... `
+  -e DB_URL=jdbc:postgresql://host.docker.internal:5432/travel `
+  -e DB_USERNAME=travel -e DB_PASSWORD=travel `
+  -e SPRING_DOCKER_COMPOSE_ENABLED=false `
+  travel-planner
+```
+Open <http://localhost:8080> → both UI and `/api/*` come from one origin.
+
 ## Endpoints
 
 | Method | Path | Purpose |
