@@ -77,7 +77,7 @@ public class RoutingService {
 
 		List<RouteDayLeg> days = waypoints.isEmpty()
 				? chunkIntoDays(legs, targetKm, origin, destination)
-				: chunkByWaypoints(legs, origin, destination, waypoints);
+				: chunkByWaypoints(legs, targetKm, origin, destination, waypoints);
 
 		log.info("Routed: {} km, {} (split into {} day(s))",
 				String.format("%.1f", totalKm), formatHours(totalHours), days.size());
@@ -86,14 +86,21 @@ public class RoutingService {
 	}
 
 	/**
-	 * When the user gives explicit waypoints, treat each waypoint as a day
-	 * boundary instead of chunking by distance. Google's Directions response
-	 * already returns one {@link DirectionsLeg} per consecutive waypoint pair,
-	 * so the legs map 1:1 to days. End-town labels come from the user's
-	 * geocoded waypoint names — no reverse geocode needed, and the table
-	 * surfaces exactly what the user typed (e.g. "Bangalore, Pune, Mumbai").
+	 * Mixed mode: each user waypoint is a guaranteed day boundary (so the
+	 * table shows what the user typed — "Bangalore", "Pune"), AND if a single
+	 * leg between two waypoints is longer than {@code targetKm} we sub-chunk
+	 * it into multiple days with reverse-geocoded intermediate towns.
+	 *
+	 * Example with maxDailyDistanceKm=300, waypoints "Bangalore, Pune"
+	 * for Chennai -> Mumbai:
+	 *   Day 1: Chennai -> Bangalore (~340 km, waypoint boundary)
+	 *   Day 2: Bangalore -> &lt;reverse-geocoded town near 300 km mark&gt;
+	 *   Day 3: &lt;that town&gt; -> &lt;another mid-leg town&gt;
+	 *   Day 4: &lt;that town&gt; -> Pune (waypoint boundary)
+	 *   Day 5: Pune -> Mumbai (~150 km)
 	 */
 	private List<RouteDayLeg> chunkByWaypoints(List<DirectionsLeg> legs,
+											   double targetKm,
 											   GeoPoint origin,
 											   GeoPoint destination,
 											   List<GeoPoint> waypoints) {
@@ -105,22 +112,66 @@ public class RoutingService {
 		labels.add(destination.label());
 
 		List<RouteDayLeg> days = new ArrayList<>();
-		for (int i = 0; i < legs.size(); i++) {
-			DirectionsLeg leg = legs.get(i);
-			double km = leg.distance.value / 1000.0;
-			double hours = leg.duration.value / 3600.0;
-			double startLat = leg.start_location != null ? leg.start_location.lat : 0;
-			double startLng = leg.start_location != null ? leg.start_location.lng : 0;
-			double endLat = leg.end_location != null ? leg.end_location.lat : 0;
-			double endLng = leg.end_location != null ? leg.end_location.lng : 0;
+		for (int legIdx = 0; legIdx < legs.size(); legIdx++) {
+			DirectionsLeg leg = legs.get(legIdx);
+			String legStartLabel = labels.get(legIdx);
+			String legEndLabel = labels.get(legIdx + 1);
+			double legStartLat = leg.start_location != null ? leg.start_location.lat : 0;
+			double legStartLng = leg.start_location != null ? leg.start_location.lng : 0;
+			double legEndLat = leg.end_location != null ? leg.end_location.lat : 0;
+			double legEndLng = leg.end_location != null ? leg.end_location.lng : 0;
+
+			double dayDistM = 0;
+			double dayDurS = 0;
+			double dayStartLat = legStartLat;
+			double dayStartLng = legStartLng;
+			String dayStartName = legStartLabel;
+			double prevStepEndLat = legStartLat;
+			double prevStepEndLng = legStartLng;
+
+			if (leg.steps != null) {
+				for (DirectionsStep step : leg.steps) {
+					double stepKm = step.distance.value / 1000.0;
+					// Pre-check threshold: close before overshooting if we
+					// already have some distance and the next step would push
+					// us over the daily cap.
+					if (dayDistM > 0 && (dayDistM / 1000.0 + stepKm) > targetKm) {
+						String endName = client.reverseGeocode(prevStepEndLat, prevStepEndLng);
+						days.add(new RouteDayLeg(
+								days.size() + 1,
+								dayStartName,
+								endName,
+								round1(dayDistM / 1000.0),
+								formatHours(dayDurS / 3600.0),
+								new double[] { dayStartLat, dayStartLng },
+								new double[] { prevStepEndLat, prevStepEndLng }));
+						dayDistM = 0;
+						dayDurS = 0;
+						dayStartLat = prevStepEndLat;
+						dayStartLng = prevStepEndLng;
+						dayStartName = endName;
+					}
+					dayDistM += step.distance.value;
+					dayDurS += step.duration.value;
+					if (step.end_location != null) {
+						prevStepEndLat = step.end_location.lat;
+						prevStepEndLng = step.end_location.lng;
+					}
+				}
+			}
+
+			// End of leg: close the day at the waypoint label, regardless of
+			// remaining distance. This is what makes waypoints "guaranteed
+			// stops" — even a short remainder becomes its own short day if
+			// that's what reaching the waypoint requires.
 			days.add(new RouteDayLeg(
-					i + 1,
-					labels.get(i),
-					labels.get(i + 1),
-					round1(km),
-					formatHours(hours),
-					new double[] { startLat, startLng },
-					new double[] { endLat, endLng }));
+					days.size() + 1,
+					dayStartName,
+					legEndLabel,
+					round1(dayDistM / 1000.0),
+					formatHours(dayDurS / 3600.0),
+					new double[] { dayStartLat, dayStartLng },
+					new double[] { legEndLat, legEndLng }));
 		}
 		return days;
 	}
