@@ -75,12 +75,54 @@ public class RoutingService {
 				? request.maxDailyDistanceKm().doubleValue()
 				: DEFAULT_DAILY_KM;
 
-		List<RouteDayLeg> days = chunkIntoDays(legs, targetKm, origin, destination);
+		List<RouteDayLeg> days = waypoints.isEmpty()
+				? chunkIntoDays(legs, targetKm, origin, destination)
+				: chunkByWaypoints(legs, origin, destination, waypoints);
 
 		log.info("Routed: {} km, {} (split into {} day(s))",
 				String.format("%.1f", totalKm), formatHours(totalHours), days.size());
 
 		return new RouteSummary("driving", round1(totalKm), formatHours(totalHours), days);
+	}
+
+	/**
+	 * When the user gives explicit waypoints, treat each waypoint as a day
+	 * boundary instead of chunking by distance. Google's Directions response
+	 * already returns one {@link DirectionsLeg} per consecutive waypoint pair,
+	 * so the legs map 1:1 to days. End-town labels come from the user's
+	 * geocoded waypoint names — no reverse geocode needed, and the table
+	 * surfaces exactly what the user typed (e.g. "Bangalore, Pune, Mumbai").
+	 */
+	private List<RouteDayLeg> chunkByWaypoints(List<DirectionsLeg> legs,
+											   GeoPoint origin,
+											   GeoPoint destination,
+											   List<GeoPoint> waypoints) {
+		List<String> labels = new java.util.ArrayList<>();
+		labels.add(origin.label());
+		for (GeoPoint wp : waypoints) {
+			labels.add(wp.label());
+		}
+		labels.add(destination.label());
+
+		List<RouteDayLeg> days = new ArrayList<>();
+		for (int i = 0; i < legs.size(); i++) {
+			DirectionsLeg leg = legs.get(i);
+			double km = leg.distance.value / 1000.0;
+			double hours = leg.duration.value / 3600.0;
+			double startLat = leg.start_location != null ? leg.start_location.lat : 0;
+			double startLng = leg.start_location != null ? leg.start_location.lng : 0;
+			double endLat = leg.end_location != null ? leg.end_location.lat : 0;
+			double endLng = leg.end_location != null ? leg.end_location.lng : 0;
+			days.add(new RouteDayLeg(
+					i + 1,
+					labels.get(i),
+					labels.get(i + 1),
+					round1(km),
+					formatHours(hours),
+					new double[] { startLat, startLng },
+					new double[] { endLat, endLng }));
+		}
+		return days;
 	}
 
 	private List<RouteDayLeg> chunkIntoDays(List<DirectionsLeg> legs,
